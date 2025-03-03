@@ -1,0 +1,75 @@
+name: Update Branch Protection
+
+on:
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  update-branch-protection:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install GitHub CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gh
+      - name: Authenticate GitHub CLI
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo $GITHUB_TOKEN | gh auth login --with-token
+      - name: Update Branch Protection
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          REPO="SchroederSteffen/test-temporary-merge-restriction"
+          BRANCH="main"
+
+          if [ "$ACTION" == "enable" ]; then
+            curl -X PUT -H "Authorization: token $GITHUB_TOKEN" \
+              -H "Accept: application/vnd.github.v3+json" \
+              https://api.github.com/repos/$REPO/branches/$BRANCH/protection \
+              -d '{
+                "required_status_checks": null,
+                "enforce_admins": false,
+                "required_pull_request_reviews": null,
+                "restrictions": {
+                  "users": [],
+                  "teams": [],
+                  "apps": []
+                },
+                "allow_force_pushes": false,
+                "allow_deletions": false,
+                "required_linear_history": false,
+                "block_creations": false,
+                "required_conversation_resolution": false,
+                "lock_branch": false,
+                "allow_fork_syncing": false,
+                "required_signatures": false
+              }'
+            echo "Restrict updates enabled."
+          elif [ "$ACTION" == "disable" ]; then
+            curl -X PUT -H "Authorization: token $GITHUB_TOKEN" \
+              -H "Accept: application/vnd.github.v3+json" \
+              https://api.github.com/repos/$REPO/branches/$BRANCH/protection \
+              -d '{
+                "required_status_checks": null,
+                "enforce_admins": false,
+                "required_pull_request_reviews": null,
+                "restrictions": null,
+                "allow_force_pushes": false,
+                "allow_deletions": false,
+                "required_linear_history": false,
+                "block_creations": false,
+                "required_conversation_resolution": false,
+                "lock_branch": false,
+                "allow_fork_syncing": false,
+                "required_signatures": false
+              }'
+            echo "Restrict updates disabled."
+          elif [ "$ACTION" == "get" ]; then
+            echo curl -H "Authorization: token $GITHUB_TOKEN" \
+               -H "Accept: application/vnd.github.v3+json" \
+               https://api.github.com/repos/$REPO/branches/$BRANCH/protection
+          else
+            echo "Invalid action. Use 'enable' or 'disable'."
+            exit 1
+          fi
