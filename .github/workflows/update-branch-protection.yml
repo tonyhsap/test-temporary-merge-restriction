@@ -25,8 +25,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          REPO="your-username/your-repo"
-          BRANCH="main"
+          REPO="tonyhsap/test-temporary-merge-restriction" # Replace with your GitHub username and repository name
+          BRANCH="main" # Replace with your branch name
           ACTION="${{ github.event.inputs.action }}"
           
           if [ "$ACTION" == "get" ]; then
