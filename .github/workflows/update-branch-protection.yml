@@ -1,7 +1,17 @@
 name: Update Branch Protection
 
 on:
-  workflow_dispatch: # Allows manual triggering
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Enable, disable, or get restrict updates'
+        required: true
+        default: 'get'
+        type: choice
+        options:
+          - enable
+          - disable
+          - get
 
 jobs:
   update-branch-protection:
@@ -16,12 +26,21 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo $GITHUB_TOKEN | gh auth login --with-token
-      - name: Update Branch Protection
+      - name: Perform Action
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          REPO="SchroederSteffen/test-temporary-merge-restriction"
+          REPO="your-username/your-repo"
           BRANCH="main"
+          ACTION="${{ github.event.inputs.action }}"
+          
+          if [ "$ACTION" == "get" ]; then
+            echo "Getting current branch protection rules..."
+            curl -H "Authorization: token $GITHUB_TOKEN" \
+                 -H "Accept: application/vnd.github.v3+json" \
+                 https://api.github.com/repos/$REPO/branches/$BRANCH/protection
+            exit 0
+          fi
 
           if [ "$ACTION" == "enable" ]; then
             curl -X PUT -H "Authorization: token $GITHUB_TOKEN" \
@@ -65,11 +84,7 @@ jobs:
                 "required_signatures": false
               }'
             echo "Restrict updates disabled."
-          elif [ "$ACTION" == "get" ]; then
-            echo curl -H "Authorization: token $GITHUB_TOKEN" \
-               -H "Accept: application/vnd.github.v3+json" \
-               https://api.github.com/repos/$REPO/branches/$BRANCH/protection
           else
-            echo "Invalid action. Use 'enable' or 'disable'."
+            echo "Invalid action. Use 'enable', 'disable', or 'get'."
             exit 1
           fi
