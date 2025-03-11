@@ -56,7 +56,7 @@ jobs:
       - name: Update Ruleset via API
         run: |
           echo "Sending updated ruleset back to GitHub..."
-          gh api repos/${{ github.repository }}/rulesets/${{ env.ruleset_id }} --method PATCH --input updated_ruleset.json
+          gh api repos/${{ github.repository }}/rulesets/${{ env.ruleset_id }} --method PUT --input updated_ruleset.json
 
       - name: Verify Updated Ruleset
         run: |
