@@ -31,6 +31,13 @@ jobs:
           echo "Checking if $DEFAULT_BRANCH branch is protected..."
           gh api repos/${{ github.repository }}/branches/$DEFAULT_BRANCH/protection \
           --header "Accept: application/vnd.github.v3+json" || echo "Branch $DEFAULT_BRANCH not protected or not found."
+      - name: Check Rulesets
+        run: |
+          echo "Checking Rulesets applied to the repository..."
+          gh api repos/${{ github.repository }}/rulesets \
+          --jq '.rules[] | {name: .name, applies_to: .conditions.ref_name}' > rulesets.json
+          echo "Rulesets:"
+          cat rulesets.json
       - name: Perform Action
         env:
           GITHUB_TOKEN: ${{ secrets.ADMIN_PAT }}
