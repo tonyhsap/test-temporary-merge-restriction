@@ -33,8 +33,9 @@ jobs:
           --header "Accept: application/vnd.github.v3+json" || echo "Branch $DEFAULT_BRANCH not protected or not found."
       - name: Fetch All Rulesets
         run: |
+          DEFAULT_BRANCH=$(gh api repos/${{ github.repository }} --jq '.default_branch')
           echo "Fetching all rulesets for repository: ${{ github.repository }}..."
-          gh api /repos/${{ github.repository }}/rules/branches/BRANCH --jq '.' > rulesets.json
+          gh api /repos/${{ github.repository }}/rules/branches/$DEFAULT_BRANCH --jq '.' > rulesets.json
           echo "Rulesets JSON saved. Raw output:"
           cat rulesets.json
 
