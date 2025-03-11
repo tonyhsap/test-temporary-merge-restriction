@@ -40,10 +40,11 @@ jobs:
 
       - name: Parse Rulesets
         run: |
-          echo "Parsing rulesets to check which branches they apply to..."
-          jq '.rules[] | {name: .name, applies_to: .conditions.ref_name}' rulesets.json > parsed_rulesets.json
+          echo "Parsing rulesets to extract relevant information..."
+          jq '.[] | {name: .name, applies_to: .target, created_at: .created_at}' rulesets.json > parsed_rulesets.json
           echo "Parsed rulesets:"
           cat parsed_rulesets.json
+
 
       - name: Perform Action
         env:
