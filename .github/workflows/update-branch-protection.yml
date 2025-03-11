@@ -43,7 +43,7 @@ jobs:
         run: |
           gh api /repos/${{ github.repository }}/rulesets/4078329 --jq '.' > ruleset.json
           echo "Ruleset JSON saved. Raw output:"
-          cat rulesetjson
+          cat ruleset.json
 
       - name: Parse Rulesets
         run: |
