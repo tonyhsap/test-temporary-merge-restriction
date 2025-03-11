@@ -45,6 +45,12 @@ jobs:
           echo "Parsed rulesets:"
           cat parsed_rulesets.json
 
+      - name: Fetch Rulesets and Restrict Updates
+        run: |
+          echo "Fetching rulesets including restrict updates setting..."
+          gh api repos/${{ github.repository }}/rulesets --jq '.[] | {name: .name, restrict_updates: .bypass_actors}' > rulesets_with_restrict.json
+          echo "Rulesets with restrict updates:"
+          cat rulesets_with_restrict.json
 
       - name: Perform Action
         env:
