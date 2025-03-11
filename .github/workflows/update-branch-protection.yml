@@ -31,34 +31,38 @@ jobs:
           echo "Checking if $DEFAULT_BRANCH branch is protected..."
           gh api repos/${{ github.repository }}/branches/$DEFAULT_BRANCH/protection \
           --header "Accept: application/vnd.github.v3+json" || echo "Branch $DEFAULT_BRANCH not protected or not found."
-      - name: Fetch All Rulesets
+      - name: Fetch Ruleset ID for Main Branch
+        id: fetch-ruleset
         run: |
           DEFAULT_BRANCH=$(gh api repos/${{ github.repository }} --jq '.default_branch')
-          echo "Fetching all rulesets for repository: ${{ github.repository }}..."
-          gh api /repos/${{ github.repository }}/rules/branches/$DEFAULT_BRANCH --jq '.' > rulesets.json
-          echo "Rulesets JSON saved. Raw output:"
-          cat rulesets.json
+          echo "Default branch is: $DEFAULT_BRANCH"
+          echo "Fetching ruleset for default branch..."
+          RULESET_RESPONSE=$(gh api repos/${{ github.repository }}/rules/branches/$DEFAULT_BRANCH --jq '.')
+          echo "$RULESET_RESPONSE" > ruleset.json
+          RULESET_ID=$(echo "$RULESET_RESPONSE" | jq -r '.[0].ruleset_id')
+          echo "Ruleset ID: $RULESET_ID"
+          echo "ruleset_id=$RULESET_ID" >> $GITHUB_ENV
 
-      - name: Fetch certain Ruleset
+      - name: Modify Ruleset to Remove Update
         run: |
-          gh api /repos/${{ github.repository }}/rulesets/4078329 --jq '.' > ruleset.json
-          echo "Ruleset JSON saved. Raw output:"
-          cat ruleset.json
+          echo "Fetching full ruleset details for ID ${{ env.ruleset_id }}..."
+          gh api repos/${{ github.repository }}/rulesets/${{ env.ruleset_id }} --jq '.' > original_ruleset.json
+          
+          echo "Modifying rules to remove 'type: update'..."
+          jq 'del(.rules[] | select(.type == "update"))' original_ruleset.json > updated_ruleset.json
+          echo "Updated ruleset:"
+          cat updated_ruleset.json
 
-      - name: Parse Rulesets
+      - name: Update Ruleset via API
         run: |
-          echo "Parsing rulesets to extract relevant information..."
-          jq '.[] | {name: .name, applies_to: .target, created_at: .created_at}' rulesets.json > parsed_rulesets.json
-          echo "Parsed rulesets:"
-          cat parsed_rulesets.json
+          echo "Sending updated ruleset back to GitHub..."
+          gh api repos/${{ github.repository }}/rulesets/${{ env.ruleset_id }} --method PATCH --input updated_ruleset.json
 
-      - name: Fetch Rulesets and Restrict Updates
+      - name: Verify Updated Ruleset
         run: |
-          echo "Fetching rulesets including restrict updates setting..."
-          gh api repos/${{ github.repository }}/rulesets --jq '.[] | {name: .name, restrict_updates: .bypass_actors}' > rulesets_with_restrict.json
-          echo "Rulesets with restrict updates:"
-          cat rulesets_with_restrict.json
-
+          echo "Verifying updated ruleset for ID ${{ env.ruleset_id }}..."
+          gh api repos/${{ github.repository }}/rulesets/${{ env.ruleset_id }} --jq '.rules'
+      
       - name: Perform Action
         env:
           GITHUB_TOKEN: ${{ secrets.ADMIN_PAT }}
