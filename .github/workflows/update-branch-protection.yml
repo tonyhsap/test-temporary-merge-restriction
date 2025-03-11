@@ -33,9 +33,9 @@ jobs:
           --header "Accept: application/vnd.github.v3+json" || echo "Branch $DEFAULT_BRANCH not protected or not found."
       - name: Check Rulesets
         run: |
-          echo "Checking Rulesets applied to the repository..."
+          echo "Fetching all rulesets for the repository..."
           gh api repos/${{ github.repository }}/rulesets \
-          --jq '.rules[] | {name: .name, applies_to: .conditions.ref_name}' > rulesets.json
+            --jq '.rules[] | {name: .name, applies_to: .conditions.ref_name}' > rulesets.json
           echo "Rulesets:"
           cat rulesets.json
       - name: Perform Action
