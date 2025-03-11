@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       action:
-        description: 'Enable, disable, or get restrict updates'
+        description: "Enable, disable, or get restrict updates"
         required: true
-        default: 'get'
+        default: "get"
         type: choice
         options:
           - enable
@@ -31,13 +31,20 @@ jobs:
           echo "Checking if $DEFAULT_BRANCH branch is protected..."
           gh api repos/${{ github.repository }}/branches/$DEFAULT_BRANCH/protection \
           --header "Accept: application/vnd.github.v3+json" || echo "Branch $DEFAULT_BRANCH not protected or not found."
-      - name: Check Rulesets
+      - name: Fetch All Rulesets
         run: |
-          echo "Fetching all rulesets for the repository..."
-          gh api repos/${{ github.repository }}/rulesets \
-            --jq '.rules[] | {name: .name, applies_to: .conditions.ref_name}' > rulesets.json
-          echo "Rulesets:"
+          echo "Fetching all rulesets for repository: ${{ github.repository }}..."
+          gh api repos/${{ github.repository }}/rulesets --jq '.' > rulesets.json
+          echo "Rulesets JSON saved. Raw output:"
           cat rulesets.json
+
+      - name: Parse Rulesets
+        run: |
+          echo "Parsing rulesets to check which branches they apply to..."
+          jq '.rules[] | {name: .name, applies_to: .conditions.ref_name}' rulesets.json > parsed_rulesets.json
+          echo "Parsed rulesets:"
+          cat parsed_rulesets.json
+
       - name: Perform Action
         env:
           GITHUB_TOKEN: ${{ secrets.ADMIN_PAT }}
@@ -45,7 +52,7 @@ jobs:
           REPO="tonyhsap/test-temporary-merge-restriction" # Replace with your GitHub username and repository name
           BRANCH="main" # Replace with your branch name
           ACTION="${{ github.event.inputs.action }}"
-          
+
           if [ "$ACTION" == "get" ]; then
             echo "Getting current branch protection rules..."
             gh api repos/${{ github.repository }}/branches/$BRANCH/protection \
