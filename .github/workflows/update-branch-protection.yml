@@ -39,6 +39,12 @@ jobs:
           echo "Rulesets JSON saved. Raw output:"
           cat rulesets.json
 
+      - name: Fetch certain Ruleset
+        run: |
+          gh api /repos/${{ github.repository }}/rulesets/4078329 --jq '.' > ruleset.json
+          echo "Ruleset JSON saved. Raw output:"
+          cat rulesetjson
+
       - name: Parse Rulesets
         run: |
           echo "Parsing rulesets to extract relevant information..."
