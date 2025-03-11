@@ -34,7 +34,7 @@ jobs:
       - name: Fetch All Rulesets
         run: |
           echo "Fetching all rulesets for repository: ${{ github.repository }}..."
-          gh api repos/${{ github.repository }}/rulesets --jq '.' > rulesets.json
+          gh api /repos/${{ github.repository }}/rules/branches/BRANCH --jq '.' > rulesets.json
           echo "Rulesets JSON saved. Raw output:"
           cat rulesets.json
 
