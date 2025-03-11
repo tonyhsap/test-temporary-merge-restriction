@@ -24,12 +24,13 @@ jobs:
       - name: Authenticate GitHub CLI
         run: |
           echo "${{ secrets.ADMIN_PAT }}" | gh auth login --with-token
-      - name: Fetch Branches
+      - name: Get Default Branch
         run: |
-          echo "Fetching branches in the repository..."
-          gh api repos/${{ github.repository }}/branches --jq '.[].name' > branches.txt
-          echo "Available branches:"
-          cat branches.txt
+          DEFAULT_BRANCH=$(gh api repos/${{ github.repository }} --jq '.default_branch')
+          echo "Default branch is: $DEFAULT_BRANCH"
+          echo "Checking if $DEFAULT_BRANCH branch is protected..."
+          gh api repos/${{ github.repository }}/branches/$DEFAULT_BRANCH/protection \
+          --header "Accept: application/vnd.github.v3+json" || echo "Branch $DEFAULT_BRANCH not protected or not found."
       - name: Perform Action
         env:
           GITHUB_TOKEN: ${{ secrets.ADMIN_PAT }}
@@ -37,12 +38,10 @@ jobs:
           REPO="tonyhsap/test-temporary-merge-restriction" # Replace with your GitHub username and repository name
           BRANCH="main" # Replace with your branch name
           ACTION="${{ github.event.inputs.action }}"
-
-          gh api repos/$REPO/branches/
           
           if [ "$ACTION" == "get" ]; then
             echo "Getting current branch protection rules..."
-            gh api repos/$REPO/branches/$BRANCH/protection \
+            gh api repos/${{ github.repository }}/branches/$BRANCH/protection \
             --header "Accept: application/vnd.github.v3+json" \
             --header "User-Agent: GitHubActions" | jq .
           fi
