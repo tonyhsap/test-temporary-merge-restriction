@@ -24,6 +24,46 @@ jobs:
       - name: Authenticate GitHub CLI
         run: |
           echo "${{ secrets.ADMIN_PAT }}" | gh auth login --with-token
+
+      - name: Install Python and tzdata
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3 python3-pip tzdata
+          pip install pytz
+
+      - name: Determine Local Time
+        id: time-check
+        run: |
+          python3 -c "
+          from datetime import datetime
+          import pytz
+
+          # Define the target timezone
+          tz = pytz.timezone('Europe/Berlin')
+
+          # Get the current time in the target timezone
+          local_time = datetime.now(tz)
+          utc_time = datetime.utcnow()
+
+          # Desired times for action
+          add_update_time = local_time.replace(hour=11, minute=30, second=0, microsecond=0)
+          remove_update_time = local_time.replace(hour=13, minute=15, second=0, microsecond=0)
+
+          # Print results for debugging
+          print(f'Current Local Time: {local_time}')
+          print(f'Current UTC Time: {utc_time}')
+
+          # Pass results to the next steps
+          if local_time.hour == 11 and local_time.minute == 30:
+              print('Action: Add update type')
+              print('::set-output name=action::add')
+          elif local_time.hour == 13 and local_time.minute == 15:
+              print('Action: Remove update type')
+              print('::set-output name=action::remove')
+          else:
+              print('Not the correct time. No action required.')
+              print('::set-output name=action::none')
+                    "
       - name: Get Default Branch
         run: |
           echo "DEFAULT_BRANCH=$(gh api repos/${{ github.repository }} --jq '.default_branch')" >> $GITHUB_ENV
