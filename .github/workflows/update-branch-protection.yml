@@ -77,7 +77,7 @@ jobs:
       - name: Fetch Ruleset ID for Main Branch
         id: fetch-ruleset
         run: |
-          echo "Fetching ruleset for branch: ${{ github.env.default_branch}}"
+          echo "Fetching ruleset for branch: ${{ github.env.DEFAULT_BRANCH }}"
           RULESET_RESPONSE=$(gh api repos/${{ github.repository }}/rules/branches/$DEFAULT_BRANCH --jq '.')
           echo "$RULESET_RESPONSE" > ruleset.json
           RULESET_ID=$(echo "$RULESET_RESPONSE" | jq -r '.[0].ruleset_id')
@@ -92,12 +92,12 @@ jobs:
           echo "Original ruleset:"
           cat original_ruleset.json
 
-          if [[ "${{ github.event.inputs.action }}" == "disable" ]]; then
+          if [[ "${{ github.env.ACTION }}" == "disable" ]]; then
             echo "Remove 'type: update'..."
             jq 'del(.rules[] | select(.type == "update"))' original_ruleset.json > updated_ruleset.json
             echo "Updated ruleset:"
             cat updated_ruleset.json
-          elif [[ "${{ github.event.inputs.action }}" == "enable" ]]; then
+          elif [[ "${{ github.env.ACTION }}" == "enable" ]]; then
             echo "Adding 'type: update'..."
             jq '.rules += [{"type": "update"}]' original_ruleset.json > updated_ruleset.json
             echo "Updated ruleset:"
@@ -105,13 +105,13 @@ jobs:
           fi
 
       - name: Update Ruleset via API
-        if: ${{ github.event.inputs.action == 'add' || github.event.inputs.action == 'remove' }}
+        if: ${{ github.env.ACTION == 'add' || github.env.ACTION == 'remove' }}
         run: |
           echo "Sending updated ruleset back to GitHub..."
           gh api repos/${{ github.repository }}/rulesets/${{ github.env.ruleset_id }} --method PUT --input updated_ruleset.json
 
       - name: Verify Updated Ruleset
-        if: ${{ github.event.inputs.action == 'add' || github.event.inputs.action == 'remove' }}
+        if: ${{ github.env.ACTION == 'add' || github.env.ACTION == 'remove' }}
         run: |
           echo "Verifying updated ruleset for ID ${{ github.env.ruleset_id }}..."
           gh api repos/${{ github.repository }}/rulesets/${{ github.env.ruleset_id }} --jq '.rules'
