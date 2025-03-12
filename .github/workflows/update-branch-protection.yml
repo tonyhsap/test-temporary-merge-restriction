@@ -47,44 +47,29 @@ jobs:
         run: |
           echo "Fetching full ruleset details for ID ${{ env.ruleset_id }}..."
           gh api repos/${{ github.repository }}/rulesets/${{ env.ruleset_id }} --jq '.' > original_ruleset.json
-          
-          echo "Modifying rules to remove 'type: update'..."
-          jq 'del(.rules[] | select(.type == "update"))' original_ruleset.json > updated_ruleset.json
-          echo "Updated ruleset:"
-          cat updated_ruleset.json
+          echo "Original ruleset:"
+          cat original_ruleset.json
+
+          if [ "$ACTION" == "disable" ]; then
+            echo "Remove 'type: update'..."
+            jq 'del(.rules[] | select(.type == "update"))' original_ruleset.json > updated_ruleset.json
+            echo "Updated ruleset:"
+            cat updated_ruleset.json
+          elif [ "$ACTION" == "enable" ]; then
+            echo "Adding 'type: update'..."
+            jq '.rules += [{"type": "update"}]' original_ruleset.json > updated_ruleset.json
+            echo "Updated ruleset:"
+            cat updated_ruleset.json
+          fi
 
       - name: Update Ruleset via API
+        if: $ACTION == "disable" || $ACTION == "enable" 
         run: |
           echo "Sending updated ruleset back to GitHub..."
           gh api repos/${{ github.repository }}/rulesets/${{ env.ruleset_id }} --method PUT --input updated_ruleset.json
 
       - name: Verify Updated Ruleset
+        if: $ACTION == "disable" || $ACTION == "enable"
         run: |
           echo "Verifying updated ruleset for ID ${{ env.ruleset_id }}..."
           gh api repos/${{ github.repository }}/rulesets/${{ env.ruleset_id }} --jq '.rules'
-      
-      - name: Perform Action
-        env:
-          GITHUB_TOKEN: ${{ secrets.ADMIN_PAT }}
-        run: |
-          REPO="tonyhsap/test-temporary-merge-restriction" # Replace with your GitHub username and repository name
-          BRANCH="main" # Replace with your branch name
-          ACTION="${{ github.event.inputs.action }}"
-
-          if [ "$ACTION" == "get" ]; then
-            echo "Getting current branch protection rules..."
-            gh api repos/${{ github.repository }}/branches/$BRANCH/protection \
-            --header "Accept: application/vnd.github.v3+json" \
-            --header "User-Agent: GitHubActions" | jq .
-          fi
-
-          if [ "$ACTION" == "enable" ]; then
-            gh api -X PUT repos/$REPO/branches/$BRANCH/protection -H "Accept: application/vnd.github.v3+json" -f required_status_checks=null -f enforce_admins=false -f required_pull_request_reviews=null -f restrictions='{"users":[],"teams":[],"apps":[]}' -f allow_force_pushes=false -f allow_deletions=false -f required_linear_history=false -f block_creations=false -f required_conversation_resolution=false -f lock_branch=false -f allow_fork_syncing=false -f required_signatures=false
-            echo "Restrict updates enabled."
-          elif [ "$ACTION" == "disable" ]; then
-            gh api -X PUT repos/$REPO/branches/$BRANCH/protection -H "Accept: application/vnd.github.v3+json" -f required_status_checks=null -f enforce_admins=false -f required_pull_request_reviews=null -f restrictions=null -f allow_force_pushes=false -f allow_deletions=false -f required_linear_history=false -f block_creations=false -f required_conversation_resolution=false -f lock_branch=false -f allow_fork_syncing=false -f required_signatures=false
-            echo "Restrict updates disabled."
-          else
-            echo "Invalid action. Use 'enable', 'disable', or 'get'."
-            exit 1
-          fi
