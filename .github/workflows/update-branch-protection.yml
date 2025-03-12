@@ -94,12 +94,12 @@ jobs:
 
           echo "Selected action: $ACTION"
 
-          if [[ "$ACTION" == "disable" ]]; then
+          if [[ "$ACTION" == "add" ]]; then
             echo "Remove 'type: update'..."
             jq 'del(.rules[] | select(.type == "update"))' original_ruleset.json > updated_ruleset.json
             echo "Updated ruleset:"
             cat updated_ruleset.json
-          elif [[ "$ACTION" == "enable" ]]; then
+          elif [[ "$ACTION" == "remove" ]]; then
             echo "Adding 'type: update'..."
             jq '.rules += [{"type": "update"}]' original_ruleset.json > updated_ruleset.json
             echo "Updated ruleset:"
