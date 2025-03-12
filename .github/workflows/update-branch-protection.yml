@@ -92,6 +92,8 @@ jobs:
           echo "Original ruleset:"
           cat original_ruleset.json
 
+          echo "Selected action: ${{ github.env.ACTION }}"
+
           if [[ "${{ github.env.ACTION }}" == "disable" ]]; then
             echo "Remove 'type: update'..."
             jq 'del(.rules[] | select(.type == "update"))' original_ruleset.json > updated_ruleset.json
