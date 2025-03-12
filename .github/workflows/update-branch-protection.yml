@@ -53,17 +53,18 @@ jobs:
           print(f'Current Local Time: {local_time}')
           print(f'Current UTC Time: {utc_time}')
 
-          # Pass results to the next steps
-          if local_time.hour == 11 and local_time.minute == 30:
-              print('Action: Add update type')
-              print('::set-output name=action::add')
-          elif local_time.hour == 13 and local_time.minute == 15:
-              print('Action: Remove update type')
-              print('::set-output name=action::remove')
-          else:
-              print('Not the correct time. No action required.')
-              print('::set-output name=action::none')
-                    "
+          # Pass results to the next steps using Environment Files
+          with open('${GITHUB_ENV}', 'a') as env_file:
+              if local_time.hour == 11 and local_time.minute == 30:
+                  print('Action: Add update type')
+                  env_file.write('ACTION=add\n')
+              elif local_time.hour == 13 and local_time.minute == 15:
+                  print('Action: Remove update type')
+                  env_file.write('ACTION=remove\n')
+              else:
+                  print('Not the correct time. No action required.')
+                  env_file.write('ACTION=none\n')
+                  "
       - name: Get Default Branch
         run: |
           echo "DEFAULT_BRANCH=$(gh api repos/${{ github.repository }} --jq '.default_branch')" >> $GITHUB_ENV
