@@ -85,7 +85,7 @@ jobs:
           echo "ruleset_id=$RULESET_ID" >> $GITHUB_ENV
 
       - name: Modify Ruleset Update Type
-        if: ${{ github.env.ACTION != 'none' }}
+        if: ${{ env.ACTION != 'none' }}
         run: |
           echo "Fetching full ruleset details for ID $ruleset_id..."
           gh api repos/${{ github.repository }}/rulesets/$ruleset_id --jq '.' > original_ruleset.json
@@ -107,13 +107,13 @@ jobs:
           fi
 
       - name: Update Ruleset via API
-        if: ${{ github.env.ACTION == 'add' || github.env.ACTION == 'remove' }}
+        if: ${{ env.ACTION == 'add' || env.ACTION == 'remove' }}
         run: |
           echo "Sending updated ruleset back to GitHub..."
           gh api repos/${{ github.repository }}/rulesets/$ruleset_id --method PUT --input updated_ruleset.json
 
       - name: Verify Updated Ruleset
-        if: ${{ github.env.ACTION == 'add' || github.env.ACTION == 'remove' }}
+        if: ${{ env.ACTION == 'add' || env.ACTION == 'remove' }}
         run: |
           echo "Verifying updated ruleset for ID $ruleset_id..."
           gh api repos/${{ github.repository }}/rulesets/$ruleset_id --jq '.rules'
