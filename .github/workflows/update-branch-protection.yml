@@ -90,7 +90,7 @@ jobs:
           echo "Fetching full ruleset details for ID $ruleset_id..."
           gh api repos/${{ github.repository }}/rulesets/$ruleset_id --jq '.' > original_ruleset.json
           echo "Original ruleset:"
-          cat original_ruleset.json
+          cat original_ruleset.json | jq '.'
 
           echo "Selected action: $ACTION"
 
