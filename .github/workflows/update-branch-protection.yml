@@ -50,12 +50,12 @@ jobs:
           echo "Original ruleset:"
           cat original_ruleset.json
 
-          if [ "$ACTION" == "disable" ]; then
+          if [[ "${{ github.event.inputs.action }}" == "disable" ]]; then
             echo "Remove 'type: update'..."
             jq 'del(.rules[] | select(.type == "update"))' original_ruleset.json > updated_ruleset.json
             echo "Updated ruleset:"
             cat updated_ruleset.json
-          elif [ "$ACTION" == "enable" ]; then
+          elif [[ "${{ github.event.inputs.action }}" == "enable" ]]; then
             echo "Adding 'type: update'..."
             jq '.rules += [{"type": "update"}]' original_ruleset.json > updated_ruleset.json
             echo "Updated ruleset:"
