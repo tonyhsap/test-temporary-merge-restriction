@@ -80,6 +80,7 @@ jobs:
       - name: Get Default Branch
         run: |
           echo "DEFAULT_BRANCH=$(gh api repos/${{ github.repository }} --jq '.default_branch')" >> $GITHUB_ENV
+
       - name: Fetch Ruleset ID for Main Branch
         id: fetch-ruleset
         run: |
