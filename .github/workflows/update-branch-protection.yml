@@ -28,15 +28,10 @@ jobs:
         run: |
           DEFAULT_BRANCH=$(gh api repos/${{ github.repository }} --jq '.default_branch')
           echo "Default branch is: $DEFAULT_BRANCH"
-          echo "Checking if $DEFAULT_BRANCH branch is protected..."
-          gh api repos/${{ github.repository }}/branches/$DEFAULT_BRANCH/protection \
-          --header "Accept: application/vnd.github.v3+json" || echo "Branch $DEFAULT_BRANCH not protected or not found."
       - name: Fetch Ruleset ID for Main Branch
         id: fetch-ruleset
         run: |
-          DEFAULT_BRANCH=$(gh api repos/${{ github.repository }} --jq '.default_branch')
-          echo "Default branch is: $DEFAULT_BRANCH"
-          echo "Fetching ruleset for default branch..."
+          echo "Fetching ruleset for branch $DEFAULT_BRANCH""
           RULESET_RESPONSE=$(gh api repos/${{ github.repository }}/rules/branches/$DEFAULT_BRANCH --jq '.')
           echo "$RULESET_RESPONSE" > ruleset.json
           RULESET_ID=$(echo "$RULESET_RESPONSE" | jq -r '.[0].ruleset_id')
