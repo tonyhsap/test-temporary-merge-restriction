@@ -63,13 +63,13 @@ jobs:
           fi
 
       - name: Update Ruleset via API
-        if: $ACTION == "disable" || $ACTION == "enable" 
+        if: ${{ github.event.inputs.action == 'enable' || github.event.inputs.action == 'disable' }}
         run: |
           echo "Sending updated ruleset back to GitHub..."
           gh api repos/${{ github.repository }}/rulesets/${{ env.ruleset_id }} --method PUT --input updated_ruleset.json
 
       - name: Verify Updated Ruleset
-        if: $ACTION == "disable" || $ACTION == "enable"
+        if: ${{ github.event.inputs.action == 'enable' || github.event.inputs.action == 'disable' }}
         run: |
           echo "Verifying updated ruleset for ID ${{ env.ruleset_id }}..."
           gh api repos/${{ github.repository }}/rulesets/${{ env.ruleset_id }} --jq '.rules'
