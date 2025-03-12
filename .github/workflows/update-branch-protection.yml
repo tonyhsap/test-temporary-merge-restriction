@@ -45,38 +45,9 @@ jobs:
             echo "ACTION=${{ github.event.inputs.action }}" >> $GITHUB_ENV
           else
             echo "Automatic schedule detected. Determining action based on time..."
-            python3 -c "
-            from datetime import datetime
-            import pytz
-
-            # Define the target timezone
-            tz = pytz.timezone('Europe/Berlin')
-
-            # Get the current time in the target timezone
-            local_time = datetime.now(tz)
-            utc_time = datetime.utcnow()
-
-            # Desired times for action
-            add_update_time = local_time.replace(hour=11, minute=30, second=0, microsecond=0)
-            remove_update_time = local_time.replace(hour=13, minute=15, second=0, microsecond=0)
-
-            # Print results for debugging
-            print(f'Current Local Time: {local_time}')
-            print(f'Current UTC Time: {utc_time}')
-
-            # Pass results to the next steps using Environment Files
-            with open('${GITHUB_ENV}', 'a') as env_file:
-                if local_time.hour == 11 and local_time.minute == 30:
-                    print('Action: Add update type')
-                    env_file.write('ACTION=add\n')
-                elif local_time.hour == 13 and local_time.minute == 15:
-                    print('Action: Remove update type')
-                    env_file.write('ACTION=remove\n')
-                else:
-                    print('Not the correct time. No action required.')
-                    env_file.write('ACTION=none\n')
-                    "
+            python3 .github/workflows/determine_action.py >> $GITHUB_ENV
           fi
+
       - name: Get Default Branch
         run: |
           echo "DEFAULT_BRANCH=$(gh api repos/${{ github.repository }} --jq '.default_branch')" >> $GITHUB_ENV
