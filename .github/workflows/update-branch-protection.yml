@@ -92,14 +92,14 @@ jobs:
           echo "Original ruleset:"
           cat original_ruleset.json
 
-          echo "Selected action: ${{ github.env.ACTION }}"
+          echo "Selected action: $ACTION"
 
-          if [[ "${{ github.env.ACTION }}" == "disable" ]]; then
+          if [[ "$ACTION" == "disable" ]]; then
             echo "Remove 'type: update'..."
             jq 'del(.rules[] | select(.type == "update"))' original_ruleset.json > updated_ruleset.json
             echo "Updated ruleset:"
             cat updated_ruleset.json
-          elif [[ "${{ github.env.ACTION }}" == "enable" ]]; then
+          elif [[ "$ACTION" == "enable" ]]; then
             echo "Adding 'type: update'..."
             jq '.rules += [{"type": "update"}]' original_ruleset.json > updated_ruleset.json
             echo "Updated ruleset:"
@@ -110,10 +110,10 @@ jobs:
         if: ${{ github.env.ACTION == 'add' || github.env.ACTION == 'remove' }}
         run: |
           echo "Sending updated ruleset back to GitHub..."
-          gh api repos/${{ github.repository }}/rulesets/${{ github.env.ruleset_id }} --method PUT --input updated_ruleset.json
+          gh api repos/${{ github.repository }}/rulesets/$ruleset_id --method PUT --input updated_ruleset.json
 
       - name: Verify Updated Ruleset
         if: ${{ github.env.ACTION == 'add' || github.env.ACTION == 'remove' }}
         run: |
-          echo "Verifying updated ruleset for ID ${{ github.env.ruleset_id }}..."
-          gh api repos/${{ github.repository }}/rulesets/${{ github.env.ruleset_id }} --jq '.rules'
+          echo "Verifying updated ruleset for ID $ruleset_id..."
+          gh api repos/${{ github.repository }}/rulesets/$ruleset_id --jq '.rules'
