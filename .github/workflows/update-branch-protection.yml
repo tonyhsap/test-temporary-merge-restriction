@@ -77,7 +77,7 @@ jobs:
       - name: Fetch Ruleset ID for Main Branch
         id: fetch-ruleset
         run: |
-          echo "Fetching ruleset for branch: ${{ github.env.DEFAULT_BRANCH }}"
+          echo "Fetching ruleset for branch: $DEFAULT_BRANCH"
           RULESET_RESPONSE=$(gh api repos/${{ github.repository }}/rules/branches/$DEFAULT_BRANCH --jq '.')
           echo "$RULESET_RESPONSE" > ruleset.json
           RULESET_ID=$(echo "$RULESET_RESPONSE" | jq -r '.[0].ruleset_id')
@@ -87,8 +87,8 @@ jobs:
       - name: Modify Ruleset Update Type
         if: ${{ github.env.ACTION != 'none' }}
         run: |
-          echo "Fetching full ruleset details for ID ${{ github.env.ruleset_id }}..."
-          gh api repos/${{ github.repository }}/rulesets/${{ github.env.ruleset_id }} --jq '.' > original_ruleset.json
+          echo "Fetching full ruleset details for ID $ruleset_id..."
+          gh api repos/${{ github.repository }}/rulesets/$ruleset_id --jq '.' > original_ruleset.json
           echo "Original ruleset:"
           cat original_ruleset.json
 
