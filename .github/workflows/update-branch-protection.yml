@@ -1,6 +1,12 @@
-name: Update Branch Ruleset Update Type
+name: Update Branch Ruleset Update Type (Block PR merges at certain times)
 
 on:
+  schedule:
+    # Automatically execute at specific times
+    - cron: "30 9 * * 1-5" # Summer time
+    - cron: "30 10 * * 1-5" # Winter time
+    - cron: "15 11 * * 1-5" # Summer time (removal)
+    - cron: "15 12 * * 1-5" # Winter time (removal)
   workflow_dispatch:
     inputs:
       action:
