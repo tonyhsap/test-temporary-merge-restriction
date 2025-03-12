@@ -31,7 +31,7 @@ jobs:
       - name: Fetch Ruleset ID for Main Branch
         id: fetch-ruleset
         run: |
-          echo "Fetching ruleset for branch $DEFAULT_BRANCH""
+          echo "Fetching ruleset for branch $DEFAULT_BRANCH"
           RULESET_RESPONSE=$(gh api repos/${{ github.repository }}/rules/branches/$DEFAULT_BRANCH --jq '.')
           echo "$RULESET_RESPONSE" > ruleset.json
           RULESET_ID=$(echo "$RULESET_RESPONSE" | jq -r '.[0].ruleset_id')
