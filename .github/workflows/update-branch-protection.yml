@@ -26,7 +26,7 @@ jobs:
           echo "${{ secrets.ADMIN_PAT }}" | gh auth login --with-token
       - name: Get Default Branch
         run: |
-          DEFAULT_BRANCH=$(gh api repos/${{ github.repository }} --jq '.default_branch')
+          echo "DEFAULT_BRANCH=$(gh api repos/${{ github.repository }} --jq '.default_branch') >> $GITHUB_ENV
           echo "Default branch is: $DEFAULT_BRANCH"
       - name: Fetch Ruleset ID for Main Branch
         id: fetch-ruleset
