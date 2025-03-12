@@ -1,16 +1,16 @@
-name: Update Branch Protection
+name: Update Branch Ruleset Update Type
 
 on:
   workflow_dispatch:
     inputs:
       action:
-        description: "Enable, disable, or get restrict updates"
+        description: "Add, remove, or get restrict updates"
         required: true
         default: "get"
         type: choice
         options:
-          - enable
-          - disable
+          - add
+          - remove
           - get
 
 jobs:
@@ -31,58 +31,64 @@ jobs:
           sudo apt-get install -y python3 python3-pip tzdata
           pip install pytz
 
-      - name: Determine Local Time
-        id: time-check
+      - name: Determine Action
+        id: action-determination
         run: |
-          python3 -c "
-          from datetime import datetime
-          import pytz
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "Manual trigger detected. Action is: ${{ github.event.inputs.action }}"
+            echo "ACTION=${{ github.event.inputs.action }}" >> $GITHUB_ENV
+          else
+            echo "Automatic schedule detected. Determining action based on time..."
+            python3 -c "
+            from datetime import datetime
+            import pytz
 
-          # Define the target timezone
-          tz = pytz.timezone('Europe/Berlin')
+            # Define the target timezone
+            tz = pytz.timezone('Europe/Berlin')
 
-          # Get the current time in the target timezone
-          local_time = datetime.now(tz)
-          utc_time = datetime.utcnow()
+            # Get the current time in the target timezone
+            local_time = datetime.now(tz)
+            utc_time = datetime.utcnow()
 
-          # Desired times for action
-          add_update_time = local_time.replace(hour=11, minute=30, second=0, microsecond=0)
-          remove_update_time = local_time.replace(hour=13, minute=15, second=0, microsecond=0)
+            # Desired times for action
+            add_update_time = local_time.replace(hour=11, minute=30, second=0, microsecond=0)
+            remove_update_time = local_time.replace(hour=13, minute=15, second=0, microsecond=0)
 
-          # Print results for debugging
-          print(f'Current Local Time: {local_time}')
-          print(f'Current UTC Time: {utc_time}')
+            # Print results for debugging
+            print(f'Current Local Time: {local_time}')
+            print(f'Current UTC Time: {utc_time}')
 
-          # Pass results to the next steps using Environment Files
-          with open('${GITHUB_ENV}', 'a') as env_file:
-              if local_time.hour == 11 and local_time.minute == 30:
-                  print('Action: Add update type')
-                  env_file.write('ACTION=add\n')
-              elif local_time.hour == 13 and local_time.minute == 15:
-                  print('Action: Remove update type')
-                  env_file.write('ACTION=remove\n')
-              else:
-                  print('Not the correct time. No action required.')
-                  env_file.write('ACTION=none\n')
-                  "
+            # Pass results to the next steps using Environment Files
+            with open('${GITHUB_ENV}', 'a') as env_file:
+                if local_time.hour == 11 and local_time.minute == 30:
+                    print('Action: Add update type')
+                    env_file.write('ACTION=add\n')
+                elif local_time.hour == 13 and local_time.minute == 15:
+                    print('Action: Remove update type')
+                    env_file.write('ACTION=remove\n')
+                else:
+                    print('Not the correct time. No action required.')
+                    env_file.write('ACTION=none\n')
+                    "
+          fi
       - name: Get Default Branch
         run: |
           echo "DEFAULT_BRANCH=$(gh api repos/${{ github.repository }} --jq '.default_branch')" >> $GITHUB_ENV
-          echo "Default branch is: $DEFAULT_BRANCH"
       - name: Fetch Ruleset ID for Main Branch
         id: fetch-ruleset
         run: |
-          echo "Fetching ruleset for branch $DEFAULT_BRANCH"
+          echo "Fetching ruleset for branch: ${{ github.env.default_branch}}"
           RULESET_RESPONSE=$(gh api repos/${{ github.repository }}/rules/branches/$DEFAULT_BRANCH --jq '.')
           echo "$RULESET_RESPONSE" > ruleset.json
           RULESET_ID=$(echo "$RULESET_RESPONSE" | jq -r '.[0].ruleset_id')
           echo "Ruleset ID: $RULESET_ID"
           echo "ruleset_id=$RULESET_ID" >> $GITHUB_ENV
 
-      - name: Modify Ruleset to Remove Update
+      - name: Modify Ruleset Update Type
+        if: ${{ github.env.ACTION != 'none' }}
         run: |
-          echo "Fetching full ruleset details for ID ${{ env.ruleset_id }}..."
-          gh api repos/${{ github.repository }}/rulesets/${{ env.ruleset_id }} --jq '.' > original_ruleset.json
+          echo "Fetching full ruleset details for ID ${{ github.env.ruleset_id }}..."
+          gh api repos/${{ github.repository }}/rulesets/${{ github.env.ruleset_id }} --jq '.' > original_ruleset.json
           echo "Original ruleset:"
           cat original_ruleset.json
 
@@ -99,13 +105,13 @@ jobs:
           fi
 
       - name: Update Ruleset via API
-        if: ${{ github.event.inputs.action == 'enable' || github.event.inputs.action == 'disable' }}
+        if: ${{ github.event.inputs.action == 'add' || github.event.inputs.action == 'remove' }}
         run: |
           echo "Sending updated ruleset back to GitHub..."
-          gh api repos/${{ github.repository }}/rulesets/${{ env.ruleset_id }} --method PUT --input updated_ruleset.json
+          gh api repos/${{ github.repository }}/rulesets/${{ github.env.ruleset_id }} --method PUT --input updated_ruleset.json
 
       - name: Verify Updated Ruleset
-        if: ${{ github.event.inputs.action == 'enable' || github.event.inputs.action == 'disable' }}
+        if: ${{ github.event.inputs.action == 'add' || github.event.inputs.action == 'remove' }}
         run: |
-          echo "Verifying updated ruleset for ID ${{ env.ruleset_id }}..."
-          gh api repos/${{ github.repository }}/rulesets/${{ env.ruleset_id }} --jq '.rules'
+          echo "Verifying updated ruleset for ID ${{ github.env.ruleset_id }}..."
+          gh api repos/${{ github.repository }}/rulesets/${{ github.env.ruleset_id }} --jq '.rules'
