@@ -1,22 +1,25 @@
 import os
-from datetime import datetime
+from datetime import datetime, time
 import pytz
 
 
 def determine_action():
-    # Define the target timezone
-    tz = pytz.timezone("Europe/Berlin")
+    # Define CET timezone
+    cet = pytz.timezone("Europe/Berlin")
 
-    # Get the current time in the target timezone
-    local_time = datetime.now(tz)
+    # Get current time in CET
+    current_time = datetime.now(cet).time()
+
+    # Define time range
+    start_time = time(11, 30)  # 11:30
+    end_time = time(13, 15)    # 13:15
 
     # Determine the action based on the current time
-    if local_time.hour == 11 and local_time.minute == 30:
+    action = "none"
+    if start_time <= current_time <= end_time:
         action = "add"
-    elif local_time.hour == 13 and local_time.minute == 15:
-        action = "remove"
     else:
-        action = "none"
+        action = "remove"
 
     # Write the action to $GITHUB_ENV for subsequent steps
     github_env = os.getenv("GITHUB_ENV")
