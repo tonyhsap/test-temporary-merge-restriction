@@ -3,10 +3,10 @@ name: Update Branch Ruleset Update Type (Block PR merges at certain times)
 on:
   schedule:
     # Automatically execute at specific times
-    - cron: "30 9 * * 1-5" # Summer time
-    - cron: "30 10 * * 1-5" # Winter time
-    - cron: "15 11 * * 1-5" # Summer time (removal)
-    - cron: "15 12 * * 1-5" # Winter time (removal)
+    - cron: "30 9 * * 1-4" # Summer time
+    - cron: "30 10 * * 1-4" # Winter time
+    - cron: "15 11 * * 1-4" # Summer time (removal)
+    - cron: "15 12 * * 1-4" # Winter time (removal)
   workflow_dispatch:
     inputs:
       action:
@@ -32,12 +32,6 @@ jobs:
         run: |
           echo "${{ secrets.ADMIN_PAT }}" | gh auth login --with-token
 
-      - name: Install Python and tzdata
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y python3 python3-pip tzdata
-          pip install pytz
-
       - name: Checkout Repository
         uses: actions/checkout@v3
 
@@ -49,15 +43,32 @@ jobs:
             echo "ACTION=${{ github.event.inputs.action }}" >> $GITHUB_ENV
           else
             echo "Automatic schedule detected. Determining action based on time..."
-            python3 .github/workflows/determine_action.py >> $GITHUB_ENV
+            # Get current time in CET
+            CURRENT_TIME=$(TZ=Europe/Berlin date +%H:%M)
+            echo "Current CET time: $CURRENT_TIME"
+
+            # Define start and end times
+            START_TIME="11:30"
+            END_TIME="13:15"
+
+            # Determine if the current time is within the range
+            if [[ "$CURRENT_TIME" > "$START_TIME" && "$CURRENT_TIME" < "$END_TIME" ]]; then
+              echo "Time is within range. Setting action to 'add'."
+              echo "ACTION=add" >> $GITHUB_ENV
+            else
+              echo "Time is outside range. Setting action to 'remove'."
+              echo "ACTION=remove" >> $GITHUB_ENV
+            fi
           fi
+          echo "Selected Action: $ACTION"
 
       - name: Get Default Branch
         run: |
-          echo "Selected action: $ACTION"
-          echo "DEFAULT_BRANCH=$(gh api repos/${{ github.repository }} --jq '.default_branch')" >> $GITHUB_ENV
+          DEFAULT_BRANCH=$(gh api repos/${{ github.repository }} --jq '.default_branch')
+          echo "Default branch: $DEFAULT_BRANCH"
+          echo "DEFAULT_BRANCH=$DEFAULT_BRANCH" >> $GITHUB_ENV
 
-      - name: Fetch Ruleset ID for Main Branch
+      - name: Fetch Ruleset ID for Default Branch
         id: fetch-ruleset
         run: |
           echo "Fetching ruleset for branch: $DEFAULT_BRANCH"
