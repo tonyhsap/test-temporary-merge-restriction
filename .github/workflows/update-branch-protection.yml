@@ -40,7 +40,7 @@ jobs:
         run: |
           if [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ github.event.inputs.action }}" != "auto" ]]; then
             echo "Manual trigger detected. Action is: ${{ github.event.inputs.action }}"
-            echo "ACTION=${{ github.event.inputs.action }}" >> $GITHUB_ENV
+            ACTION=${{ github.event.inputs.action }}
           else
             echo "Automatic schedule detected. Determining action based on time..."
             # Get current time in CET
@@ -54,13 +54,14 @@ jobs:
             # Determine if the current time is within the range
             if [[ "$CURRENT_TIME" > "$START_TIME" && "$CURRENT_TIME" < "$END_TIME" ]]; then
               echo "Time is within range. Setting action to 'add'."
-              echo "ACTION=add" >> $GITHUB_ENV
+              ACTION="add"
             else
               echo "Time is outside range. Setting action to 'remove'."
-              echo "ACTION=remove" >> $GITHUB_ENV
+              ACTION="remove"
             fi
           fi
           echo "Selected Action: $ACTION"
+          echo "ACTION=$ACTION" >> $GITHUB_ENV
 
       - name: Get Default Branch
         run: |
@@ -79,7 +80,6 @@ jobs:
           echo "ruleset_id=$RULESET_ID" >> $GITHUB_ENV
 
       - name: Modify Ruleset Update Type
-        if: ${{ env.ACTION != 'none' }}
         run: |
           echo "Fetching full ruleset details for ID $ruleset_id..."
           gh api repos/${{ github.repository }}/rulesets/$ruleset_id --jq '.' > original_ruleset.json
