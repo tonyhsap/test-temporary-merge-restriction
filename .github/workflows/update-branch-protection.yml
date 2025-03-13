@@ -52,8 +52,6 @@ jobs:
             python3 .github/workflows/determine_action.py >> $GITHUB_ENV
           fi
 
-          echo "Selected action: $ACTION"
-
       - name: Get Default Branch
         run: |
           echo "Selected action: $ACTION"
