@@ -52,8 +52,11 @@ jobs:
             python3 .github/workflows/determine_action.py >> $GITHUB_ENV
           fi
 
+          echo "Selected action: $ACTION"
+
       - name: Get Default Branch
         run: |
+          echo "Selected action: $ACTION"
           echo "DEFAULT_BRANCH=$(gh api repos/${{ github.repository }} --jq '.default_branch')" >> $GITHUB_ENV
 
       - name: Fetch Ruleset ID for Main Branch
@@ -73,8 +76,6 @@ jobs:
           gh api repos/${{ github.repository }}/rulesets/$ruleset_id --jq '.' > original_ruleset.json
           echo "Original ruleset:"
           cat original_ruleset.json | jq '.'
-
-          echo "Selected action: $ACTION"
 
           if [[ "$ACTION" == "remove" ]]; then
             echo "Remove 'type: update'..."
