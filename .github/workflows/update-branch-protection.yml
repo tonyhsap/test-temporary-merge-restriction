@@ -37,6 +37,9 @@ jobs:
           sudo apt-get install -y python3 python3-pip tzdata
           pip install pytz
 
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
       - name: Determine Action
         id: action-determination
         run: |
