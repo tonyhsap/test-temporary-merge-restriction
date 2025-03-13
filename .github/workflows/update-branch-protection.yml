@@ -93,5 +93,5 @@ jobs:
             echo "Updated ruleset:"
             cat updated_ruleset.json
             echo "Sending updated ruleset back to GitHub..."
-            gh api repos/${{ github.repository }}/rulesets/$ruleset_id --method PATCH --input updated_ruleset.json
+            gh api repos/${{ github.repository }}/rulesets/$ruleset_id --method PUT --input updated_ruleset.json
           fi
