@@ -10,35 +10,28 @@ on:
   workflow_dispatch:
     inputs:
       action:
-        description: "Add, remove, or get restrict updates"
+        description: "Restrict, open, get or determine time-based branch updates"
         required: true
         default: "get"
         type: choice
         options:
-          - add
-          - remove
+          - restrict
+          - open
           - get
-          - auto
+          - time-based
 
 jobs:
   update-branch-protection:
     runs-on: ubuntu-latest
     steps:
-      - name: Install GitHub CLI
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gh
       - name: Authenticate GitHub CLI
         run: |
           echo "${{ secrets.ADMIN_PAT }}" | gh auth login --with-token
 
-      - name: Checkout Repository
-        uses: actions/checkout@v3
-
       - name: Determine Action
         id: action-determination
         run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ github.event.inputs.action }}" != "auto" ]]; then
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ github.event.inputs.action }}" != "time-based" ]]; then
             echo "Manual trigger detected. Action is: ${{ github.event.inputs.action }}"
             ACTION=${{ github.event.inputs.action }}
           else
@@ -53,11 +46,11 @@ jobs:
 
             # Determine if the current time is within the range
             if [[ "$CURRENT_TIME" > "$START_TIME" && "$CURRENT_TIME" < "$END_TIME" ]]; then
-              echo "Time is within range. Setting action to 'add'."
-              ACTION="add"
+              echo "Time is within range. Setting action to 'restrict'."
+              ACTION="restrict"
             else
-              echo "Time is outside range. Setting action to 'remove'."
-              ACTION="remove"
+              echo "Time is outside range. Setting action to 'open'."
+              ACTION="open"
             fi
           fi
           echo "Selected Action: $ACTION"
@@ -86,16 +79,16 @@ jobs:
           echo "Original ruleset:"
           cat original_ruleset.json | jq '.'
 
-          if [[ "$ACTION" == "remove" ]]; then
-            echo "Removing 'type: update'..."
+          if [[ "$ACTION" == "open" ]]; then
+            echo "Opening Updates by removing 'type: update'..."
             jq 'del(.rules[] | select(.type == "update"))' original_ruleset.json > updated_ruleset.json
-          elif [[ "$ACTION" == "add" ]]; then
+          elif [[ "$ACTION" == "Restrict" ]]; then
             echo "Checking if 'type: update' already exists..."
             EXISTS=$(jq '.rules[] | select(.type == "update")' original_ruleset.json)
             if [[ -n "$EXISTS" ]]; then
               echo "'type: update' already exists. No changes made."
             else
-              echo "Adding 'type: update'..."
+              echo "Restricting Updates by adding 'type: update'..."
               jq '.rules += [{"type": "update"}]' original_ruleset.json > updated_ruleset.json
             fi
           fi
