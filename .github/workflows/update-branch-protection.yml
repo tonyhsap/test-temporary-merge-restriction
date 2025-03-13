@@ -84,7 +84,8 @@ jobs:
             gh api repos/${{ github.repository }}/rulesets/$RULESET_ID --method PATCH --input updated_ruleset.json
           elif [[ "$ACTION" == "add" ]]; then
             echo "Checking if 'type: update' already exists..."
-            if jq '.rules[] | select(.type == "update")' original_ruleset.json > /dev/null; then
+            EXISTS=$(jq '.rules[] | select(.type == "update")' original_ruleset.json)
+            if [[ -n "$EXISTS" ]]; then
               echo "'type: update' already exists. No changes made."
             else
               echo "Adding 'type: update'..."
