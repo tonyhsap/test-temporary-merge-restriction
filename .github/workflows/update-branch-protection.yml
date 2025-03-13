@@ -78,10 +78,6 @@ jobs:
           if [[ "$ACTION" == "remove" ]]; then
             echo "Removing 'type: update'..."
             jq 'del(.rules[] | select(.type == "update"))' original_ruleset.json > updated_ruleset.json
-            echo "Updated ruleset:"
-            cat updated_ruleset.json
-            echo "Sending updated ruleset back to GitHub..."
-            gh api repos/${{ github.repository }}/rulesets/$RULESET_ID --method PATCH --input updated_ruleset.json
           elif [[ "$ACTION" == "add" ]]; then
             echo "Checking if 'type: update' already exists..."
             EXISTS=$(jq '.rules[] | select(.type == "update")' original_ruleset.json)
@@ -90,9 +86,12 @@ jobs:
             else
               echo "Adding 'type: update'..."
               jq '.rules += [{"type": "update"}]' original_ruleset.json > updated_ruleset.json
-              echo "Updated ruleset:"
-              cat updated_ruleset.json
-              echo "Sending updated ruleset back to GitHub..."
-              gh api repos/${{ github.repository }}/rulesets/$RULESET_ID --method PATCH --input updated_ruleset.json
             fi
+          fi
+
+          if [[ -f updated_ruleset.json ]]; then
+            echo "Updated ruleset:"
+            cat updated_ruleset.json
+            echo "Sending updated ruleset back to GitHub..."
+            gh api repos/${{ github.repository }}/rulesets/$ruleset_id --method PATCH --input updated_ruleset.json
           fi
