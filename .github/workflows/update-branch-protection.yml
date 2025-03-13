@@ -76,25 +76,22 @@ jobs:
           cat original_ruleset.json | jq '.'
 
           if [[ "$ACTION" == "remove" ]]; then
-            echo "Remove 'type: update'..."
+            echo "Removing 'type: update'..."
             jq 'del(.rules[] | select(.type == "update"))' original_ruleset.json > updated_ruleset.json
             echo "Updated ruleset:"
             cat updated_ruleset.json
+            echo "Sending updated ruleset back to GitHub..."
+            gh api repos/${{ github.repository }}/rulesets/$RULESET_ID --method PATCH --input updated_ruleset.json
           elif [[ "$ACTION" == "add" ]]; then
-            echo "Adding 'type: update'..."
-            jq '.rules += [{"type": "update"}]' original_ruleset.json > updated_ruleset.json
-            echo "Updated ruleset:"
-            cat updated_ruleset.json
+            echo "Checking if 'type: update' already exists..."
+            if jq '.rules[] | select(.type == "update")' original_ruleset.json > /dev/null; then
+              echo "'type: update' already exists. No changes made."
+            else
+              echo "Adding 'type: update'..."
+              jq '.rules += [{"type": "update"}]' original_ruleset.json > updated_ruleset.json
+              echo "Updated ruleset:"
+              cat updated_ruleset.json
+              echo "Sending updated ruleset back to GitHub..."
+              gh api repos/${{ github.repository }}/rulesets/$RULESET_ID --method PATCH --input updated_ruleset.json
+            fi
           fi
-
-      - name: Update Ruleset via API
-        if: ${{ env.ACTION == 'add' || env.ACTION == 'remove' }}
-        run: |
-          echo "Sending updated ruleset back to GitHub..."
-          gh api repos/${{ github.repository }}/rulesets/$ruleset_id --method PUT --input updated_ruleset.json
-
-      - name: Verify Updated Ruleset
-        if: ${{ env.ACTION == 'add' || env.ACTION == 'remove' }}
-        run: |
-          echo "Verifying updated ruleset for ID $ruleset_id..."
-          gh api repos/${{ github.repository }}/rulesets/$ruleset_id --jq '.rules'
