@@ -82,7 +82,7 @@ jobs:
           if [[ "$ACTION" == "open" ]]; then
             echo "Opening Updates by removing 'type: update'..."
             jq 'del(.rules[] | select(.type == "update"))' original_ruleset.json > updated_ruleset.json
-          elif [[ "$ACTION" == "Restrict" ]]; then
+          elif [[ "$ACTION" == "restrict" ]]; then
             echo "Checking if 'type: update' already exists..."
             EXISTS=$(jq '.rules[] | select(.type == "update")' original_ruleset.json)
             if [[ -n "$EXISTS" ]]; then
