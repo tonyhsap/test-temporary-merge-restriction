@@ -17,9 +17,13 @@ def determine_action():
     else:
         action = "none"
 
-    # Write the action to $GITHUB_ENV so it can be used in subsequent steps
-    with open('/github/env', 'a') as env_file:
-        env_file.write(f"ACTION={action}\n")
+    # Write the action to $GITHUB_ENV for subsequent steps
+    github_env = os.getenv("GITHUB_ENV")
+    if github_env:
+        with open(github_env, "a") as env_file:
+            env_file.write(f"ACTION={action}\n")
+    else:
+        print("GITHUB_ENV is not set. Cannot persist environment variable.")
 
 if __name__ == "__main__":
     determine_action()
